@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Buddies Weight Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.3"/><circle cx="80" cy="40" r="1.5" fill="white" opacity="0.2"/><circle cx="40" cy="80" r="1" fill="white" opacity="0.4"/><circle cx="90" cy="90" r="2.5" fill="white" opacity="0.1"/></svg>');
+            animation: sparkle 3s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .sync-section {
+            background: #e3f2fd;
+            padding: 20px 30px;
+            border-bottom: 1px solid #bbdefb;
+        }
+
+        .sync-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sync-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 10px;
+            border: 2px solid #2196f3;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .sync-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .sync-btn:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+        }
+
+        .sync-status {
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .sync-status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .sync-status.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #f44336;
+        }
+
+        .sync-status.show {
+            display: block;
+        }
+
+        .profile-section {
+            background: #f3e5f5;
+            padding: 20px 30px;
+            border-bottom: 1px solid #ce93d8;
+        }
+
+        .profile-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .profile-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .profile-group input {
+            padding: 8px;
+            border: 2px solid #9c27b0;
+            border-radius: 5px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            min-width: 120px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .bmi-display {
+            font-size: 1.2em;
+            margin-top: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        .bmi-normal {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .bmi-overweight {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .bmi-underweight {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .bmi-obese {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: fit-content;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+        }
+
+        tr:hover td {
+            background-color: #f8f9fa;
+        }
+
+        .weight-change {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .weight-up {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .weight-down {
+            background: #e8f5e8;
+            color: #4caf50;
+        }
+
+        .weight-stable {
+            background: #fff3e0;
+            color: #ff9800;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .milestone {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            display: none;
+        }
+
+        .milestone.show {
+            display: block;
+            animation: celebration 0.5s ease-in-out;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .goal-section {
+            padding: 20px 30px;
+            background: #e8f5e8;
+            border-bottom: 1px solid #c8e6c9;
+        }
+
+        .goal-input {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .goal-input input {
+            padding: 8px;
+            border: 2px solid #4caf50;
+            border-radius: 5px;
+            width: 100px;
+        }
+
+        .goal-progress {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .goal-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .data-controls {
+            padding: 20px 30px;
+            background: #fff3e0;
+            border-bottom: 1px solid #ffcc02;
+        }
+
+        .data-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .data-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .data-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+
+        .data-btn.danger {
+            background: #f44336;
+        }
+
+        .data-btn.danger:hover {
+            background: #d32f2f;
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+
+        .achievements-section {
+            padding: 20px 30px;
+            background: #fce4ec;
+            border-bottom: 1px solid #f8bbd9;
+        }
+
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .achievement-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .achievement-card.unlocked {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            transform: scale(1.05);
+        }
+
+        .achievement-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .chart-container {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .simple-chart {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            height: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-line {
+            stroke-width: 3;
+            fill: none;
+        }
+
+        .your-line {
+            stroke: #667eea;
+        }
+
+        .jesse-line {
+            stroke: #ff6b6b;
+        }
+
+        .chart-legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .input-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stat-card {
+                min-width: 200px;
+            }
+
+            .sync-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .sync-input {
+                min-width: auto;
+            }
+
+            .goal-input {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .goal-progress {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏋️‍♂️ Training Buddies Weight Tracker 🏋️‍♀️</h1>
+            <p>You & Jesse's Fitness Journey • Started July 12, 2025</p>
+        </div>
+
+        <div class="sync-section">
+            <h3>☁️ Google Sheets Sync</h3>
+            <div class="sync-controls">
+                <input type="text" id="sheetsUrl" class="sync-input" placeholder="Paste your Google Sheets CSV export URL here...">
+                <button class="sync-btn" onclick="saveToSheets()">📤 Save to Sheets</button>
+                <button class="sync-btn" onclick="loadFromSheets()">📥 Load from Sheets</button>
+            </div>
+            <div id="syncStatus" class="sync-status"></div>
+            <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                <strong>Setup:</strong> Create a Google Sheet, then use File → Share → Publish to Web → CSV to get the URL
+            </p>
+        </div>
+
+        <div class="profile-section">
+            <h3>👥 Profile Setup (for BMI calculation)</h3>
+            <div class="profile-inputs">
+                <div class="profile-group">
+                    <label>Your Height (inches):</label>
+                    <input type="number" id="yourHeight" placeholder="e.g., 70" onchange="saveProfiles()">
+                </div>
+                <div class="profile-group">
+                    <label>Your Age:</label>
+                    <input type="number" id="yourAge" placeholder="e.g., 35" onchange="saveProfiles()">
+                </div>
+                <div class="profile-group">
+                    <label>Jesse's Height (inches):</label>
+                    <input type="number" id="jesseHeight" placeholder="e.g., 65" onchange="saveProfiles()">
+                </div>
+                <div class="profile-group">
+                    <label>Jesse's Age:</label>
+                    <input type="number" id="jesseAge" placeholder="e.g., 16" onchange="saveProfiles()">
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number" id="totalWeeks">0</div>
+                <div class="stat-label">Weeks Tracked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="yourProgress">0</div>
+                <div class="stat-label">Your Progress (lbs)</div>
+                <div class="bmi-display" id="yourBMI">BMI: --</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="jesseProgress">0</div>
+                <div class="stat-label">Jesse's Progress (lbs)</div>
+                <div class="bmi-display" id="jesseBMI">BMI: --</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="streak">0</div>
+                <div class="stat-label">Week Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalLoss">0</div>
+                <div class="stat-label">Combined Loss (lbs)</div>
+            </div>
+        </div>
+
+        <div class="achievements-section">
+            <h3>🏆 Achievements</h3>
+            <div class="achievement-grid" id="achievementGrid">
+                <!-- Achievements will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="goal-section">
+            <h3>🎯 Set Your Goals</h3>
+            <div class="goal-input">
+                <label>Your Goal Weight:</label>
+                <input type="number" id="yourGoal" step="0.1" placeholder="lbs">
+                <label>Jesse's Goal Weight:</label>
+                <input type="number" id="jesseGoal" step="0.1" placeholder="lbs">
+                <button class="btn-add" onclick="setGoals()">Set Goals</button>
+            </div>
+            <div class="goal-progress">
+                <div class="goal-card">
+                    <h4>Your Goal Progress</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="yourGoalProgress" style="width: 0%"></div>
+                    </div>
+                    <p id="yourGoalText">Set a goal to see progress</p>
+                </div>
+                <div class="goal-card">
+                    <h4>Jesse's Goal Progress</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="jesseGoalProgress" style="width: 0%"></div>
+                    </div>
+                    <p id="jesseGoalText">Set a goal to see progress</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h3>📊 Add This Week's Weight</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="input-group">
+                    <label for="yourWeight">Your Weight (lbs):</label>
+                    <input type="number" id="yourWeight" step="0.1" placeholder="0.0" required>
+                </div>
+                <div class="input-group">
+                    <label for="jesseWeight">Jesse's Weight (lbs):</label>
+                    <input type="number" id="jesseWeight" step="0.1" placeholder="0.0" required>
+                </div>
+                <div class="input-group">
+                    <label for="notes">Notes (optional):</label>
+                    <input type="text" id="notes" placeholder="How was the week?">
+                </div>
+                <button class="btn-add" onclick="addWeightEntry()">Add Entry</button>
+            </div>
+            <div class="milestone" id="milestone"></div>
+        </div>
+
+        <div class="data-controls">
+            <h3>💾 Data Management</h3>
+            <div class="data-buttons">
+                <button class="data-btn" onclick="exportData()">📊 Export CSV</button>
+                <button class="data-btn" onclick="importData()">📁 Import CSV</button>
+                <button class="data-btn danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+            </div>
+            <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="handleFileImport(event)">
+        </div>
+
+        <div class="table-container">
+            <h3>📈 Weight History</h3>
+            <table id="weightTable">
+                <thead>
+                    <tr>
+                        <th>Week</th>
+                        <th>Date</th>
+                        <th>Your Weight</th>
+                        <th>Change</th>
+                        <th>BMI</th>
+                        <th>Jesse's Weight</th>
+                        <th>Change</th>
+                        <th>BMI</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="weightTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="chart-container">
+            <h3 class="chart-title">📊 Progress Chart</h3>
+            <div class="simple-chart" id="chartContainer">
+                <div id="chartContent" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #666; font-style: italic;">
+                    Add weight entries to see your progress chart!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let weightData = [];
+        let goals = { your: null, jesse: null };
+        let profiles = { yourHeight: null, yourAge: null, jesseHeight: null, jesseAge: null };
+        let achievements = [
+            { id: 'first_week', title: 'First Steps', description: 'Complete your first week', icon: '🎯', unlocked: false },
+            { id: 'one_month', title: 'Consistent Tracker', description: 'Track for 4 weeks straight', icon: '📅', unlocked: false },
+            { id: 'weight_loss_5', title: 'First Victory', description: 'Lose 5 lbs combined', icon: '🎉', unlocked: false },
+            { id: 'weight_loss_10', title: 'Team Effort', description: 'Lose 10 lbs combined', icon: '💪', unlocked: false },
+            { id: 'three_months', title: 'Dedication', description: 'Track for 12 weeks', icon: '🏆', unlocked: false },
+            { id: 'weight_loss_20', title: 'Transformation', description: 'Lose 20 lbs combined', icon: '⭐', unlocked: false },
+            { id: 'goal_reached', title: 'Goal Crusher', description: 'Reach your goal weight', icon: '🎊', unlocked: false },
+            { id: 'six_months', title: 'Lifestyle Change', description: 'Track for 26 weeks', icon: '👑', unlocked: false }
+        ];
+
+        // Load data from localStorage on page load
+        window.addEventListener('load', function() {
+            loadFromLocalStorage();
+            document.getElementById('date').valueAsDate = new Date();
+            renderAchievements();
+        });
+
+        function saveToLocalStorage() {
+            const data = {
+                weightData: weightData,
+                goals: goals,
+                profiles: profiles,
+                achievements: achievements,
+                lastUpdated: new Date().toISOString()
+            };
+            localStorage.setItem('weightTrackerData', JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('weightTrackerData');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    weightData = data.weightData || [];
+                    goals = data.goals || { your: null, jesse: null };
+                    profiles = data.profiles || { yourHeight: null, yourAge: null, jesseHeight: null, jesseAge: null };
+                    achievements = data.achievements || achievements;
+                    
+                    updateTable();
+                    updateStats();
+                    updateGoalProgress();
+                    updateChart();
+                    
+                    // Restore inputs
+                    if (goals.your) document.getElementById('yourGoal').value = goals.your;
+                    if (goals.jesse) document.getElementById('jesseGoal').value = goals.jesse;
+                    if (profiles.yourHeight) document.getElementById('yourHeight').value = profiles.yourHeight;
+                    if (profiles.yourAge) document.getElementById('yourAge').value = profiles.yourAge;
+                    if (profiles.jesseHeight) document.getElementById('jesseHeight').value = profiles.jesseHeight;
+                    if (profiles.jesseAge) document.getElementById('jesseAge').value = profiles.jesseAge;
+                    
+                    showSyncStatus('Data loaded from browser storage', 'success');
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                    showSyncStatus('Error loading saved data', 'error');
+                }
+            }
+        }
+
+        function saveProfiles() {
+            profiles.yourHeight = parseFloat(document.getElementById('yourHeight').value) || null;
+            profiles.yourAge = parseFloat(document.getElementById('yourAge').value) || null;
+            profiles.jesseHeight = parseFloat(document.getElementById('jesseHeight').value) || null;
+            profiles.jesseAge = parseFloat(document.getElementById('jesseAge').value) || null;
+            
+            saveToLocalStorage();
+            updateStats();
+            updateTable();
+        }
+
+        function calculateBMI(weight, height) {
+            if (!weight || !height) return null;
+            const bmi = (weight / (height * height)) * 703;
+            return bmi.toFixed(1);
+        }
+
+        function getBMICategory(bmi) {
+            if (bmi < 18.5) return { category: 'Underweight', class: 'bmi-underweight' };
+            if (bmi < 25) return { category: 'Normal', class: 'bmi-normal' };
+            if (bmi < 30) return { category: 'Overweight', class: 'bmi-overweight' };
+            return { category: 'Obese', class: 'bmi-obese' };
+        }
+
+        function addWeightEntry() {
+            const date = document.getElementById('date').value;
+            const yourWeight = parseFloat(document.getElementById('yourWeight').value);
+            const jesseWeight = parseFloat(document.getElementById('jesseWeight').value);
+            const notes = document.getElementById('notes').value;
+
+            if (!date || !yourWeight || !jesseWeight) {
+                alert('Please fill in all required fields!');
+                return;
+            }
+
+            const entry = {
+                date: date,
+                yourWeight: yourWeight,
+                jesseWeight: jesseWeight,
+                notes: notes,
+                week: weightData.length + 1
+            };
+
+            weightData.push(entry);
+            saveToLocalStorage();
+            updateTable();
+            updateStats();
+            updateGoalProgress();
+            updateChart();
+            checkMilestones();
+            checkAchievements();
+            clearInputs();
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('weightTableBody');
+            tbody.innerHTML = '';
+
+            weightData.forEach((entry, index) => {
+                const row = tbody.insertRow();
+                
+                const yourChange = index > 0 ? entry.yourWeight - weightData[index - 1].yourWeight : 0;
+                const jesseChange = index > 0 ? entry.jesseWeight - weightData[index - 1].jesseWeight : 0;
+                
+                const yourBMI = calculateBMI(entry.yourWeight, profiles.yourHeight);
+                const jesseBMI = calculateBMI(entry.jesseWeight, profiles.jesseHeight);
+
+                row.innerHTML = `
+                    <td>Week ${entry.week}</td>
+                    <td>${new Date(entry.date).toLocaleDateString()}</td>
+                    <td>${entry.yourWeight.to
